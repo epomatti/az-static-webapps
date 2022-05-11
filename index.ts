@@ -1,8 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as azure_native from "@pulumi/azure-native";
 
-// const config = new pulumi.Config();
-
 const resourceGroup = new azure_native.resources.ResourceGroup("rg-static-webapp", {
     location: "westus2"
 });
@@ -13,11 +11,14 @@ const virtualNetwork = new azure_native.network.VirtualNetwork("virtualNetwork",
     },
     location: "westus2",
     resourceGroupName: resourceGroup.name,
-    subnets: [{
-        addressPrefix: "10.0.0.0/24",
-        name: "subnet-001"
-    }],
     virtualNetworkName: "vnet-static-webapp",
+});
+
+const subnet = new azure_native.network.Subnet("subnet-001", {
+    addressPrefix: "10.0.0.0/24",
+    privateEndpointNetworkPolicies: azure_native.network.VirtualNetworkPrivateEndpointNetworkPolicies.Disabled,
+    resourceGroupName: resourceGroup.name,
+    virtualNetworkName: virtualNetwork.name,
 });
 
 const privateZone = new azure_native.network.PrivateZone("privateZone", {
@@ -25,26 +26,6 @@ const privateZone = new azure_native.network.PrivateZone("privateZone", {
     privateZoneName: "internal-pomatti.xyz",
     resourceGroupName: resourceGroup.name,
 });
-
-const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
-    location: "Global",
-    privateZoneName: privateZone.name,
-    registrationEnabled: false,
-    resourceGroupName: resourceGroup.name,
-    virtualNetwork: {
-        id: virtualNetwork.id,
-    },
-    virtualNetworkLinkName: "virtualNetworkLink1",
-});
-
-// const privateDnsZoneGroup = new azure_native.network.PrivateDnsZoneGroup("privateDnsZoneGroup", {
-//     privateDnsZoneConfigs: [{
-//         privateDnsZoneId: privateZone.id,
-//     }],
-//     privateDnsZoneGroupName: "testPdnsgroup",
-//     privateEndpointName: "testPe",
-//     resourceGroupName: "rg1",
-// });
 
 const staticSite = new azure_native.web.StaticSite("staticsite-demo", {
     resourceGroupName: resourceGroup.name,
@@ -59,22 +40,40 @@ const staticSite = new azure_native.web.StaticSite("staticsite-demo", {
         name: "Standard",
         tier: "Standard",
     },
-
 })
 
-// const staticSitePrivateEndpointConnection = new azure_native.web.StaticSitePrivateEndpointConnection("staticSitePrivateEndpointConnection", {
-//     name: staticSite.name,
-//     privateEndpointConnectionName: "connection",
-//     privateLinkServiceConnectionState: {
-//         actionsRequired: "",
-//         description: "Approved by admin.",
-//         status: "Approved",
-//     },
-//     resourceGroupName: resourceGroup.name,
-// });
+const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
+    location: "Global",
+    privateZoneName: privateZone.name,
+    registrationEnabled: false,
+    resourceGroupName: resourceGroup.name,
+    virtualNetwork: {
+        id: virtualNetwork.id,
+    },
+    virtualNetworkLinkName: "virtualNetworkLink1",
+});
 
-// const staticSiteCustomDomain = new azure_native.web.StaticSiteCustomDomain("staticSiteCustomDomain", {
-//     domainName: "azstaticapp.demos.pomatti.io",
-//     name: "testStaticSite0",
-//     resourceGroupName: resourceGroup.name,
-// });
+const privateEndpoint = new azure_native.network.PrivateEndpoint("privateEndpoint", {
+    location: "westus2",
+    privateLinkServiceConnections: [{
+        groupIds: ["staticSites"],
+        name: "privateEndpointLink1",
+        privateLinkServiceId: staticSite.id,
+    }],
+    privateEndpointName: "pe-staticsite",
+    resourceGroupName: resourceGroup.name,
+    subnet: {
+        id: subnet.id,
+    },
+});
+
+
+const privateDNSZoneGroup = new azure_native.network.PrivateDnsZoneGroup("privateDnsZoneGroup", {
+    privateDnsZoneConfigs: [{
+        name: "config1",
+        privateDnsZoneId: privateZone.id,
+    }],
+    privateDnsZoneGroupName: privateEndpoint.name,
+    privateEndpointName: privateEndpoint.name,
+    resourceGroupName: resourceGroup.name,
+});
