@@ -31,13 +31,15 @@ const subnetVm = new azure_native.network.Subnet("subnet-002-vm", {
 // Private DNS
 
 const privateZone = new azure_native.network.PrivateZone("privateZone", {
-    location: "Global",
-    privateZoneName: "internal-pomatti.xyz",
-    resourceGroupName: resourceGroup.name,
+    location: "global",
+    privateZoneName: "privatelink.1.azurestaticapps.net",
+    resourceGroupName: resourceGroup.name
+}, {
+    dependsOn: [virtualNetwork],
 });
 
 const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
-    location: "Global",
+    location: "global",
     privateZoneName: privateZone.name,
     registrationEnabled: true,
     resourceGroupName: resourceGroup.name,
@@ -63,75 +65,72 @@ const staticSite = new azure_native.web.StaticSite("staticsite-demo", {
     },
 })
 
-// const privateEndpoint = new azure_native.network.PrivateEndpoint("privateEndpoint", {
-//     privateLinkServiceConnections: [{
-//         groupIds: ["staticSites"],
-//         name: "privateEndpointLink1",
-//         privateLinkServiceId: staticSite.id,
-//     }],
-//     // customDnsConfigs: [
+const privateEndpoint = new azure_native.network.PrivateEndpoint("privateEndpoint", {
+    privateLinkServiceConnections: [{
+        groupIds: ["staticSites"],
+        name: "privateEndpointLink1",
+        privateLinkServiceId: staticSite.id,
+    }],
+    resourceGroupName: resourceGroup.name,
+    subnet: {
+        id: subnetStaticSite.id,
+    }
+});
 
-//     // ],
-//     privateEndpointName: "pe-staticsite",
-//     resourceGroupName: resourceGroup.name,
-//     subnet: {
-//         id: subnet.id,
-//     }
-// });
+const privateDNSZoneGroup = new azure_native.network.PrivateDnsZoneGroup("privateDnsZoneGroup", {
+    privateDnsZoneConfigs: [{
+        name: "config1",
+        privateDnsZoneId: privateZone.id,
+    }],
+    privateDnsZoneGroupName: privateEndpoint.name,
+    privateEndpointName: privateEndpoint.name,
+    resourceGroupName: resourceGroup.name,
+});
 
-// const privateDNSZoneGroup = new azure_native.network.PrivateDnsZoneGroup("privateDnsZoneGroup", {
-//     privateDnsZoneConfigs: [{
-//         name: "config1",
-//         privateDnsZoneId: privateZone.id,
-//     }],
-//     privateDnsZoneGroupName: privateEndpoint.name,
-//     privateEndpointName: privateEndpoint.name,
-//     resourceGroupName: resourceGroup.name,
-// });
 
 // Jumpbox VM for Testing
 
-// const publicIp = new azure_native.network.PublicIPAddress("server-ip", {
-//     resourceGroupName: resourceGroup.name,
-//     publicIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
-// });
+const publicIp = new azure_native.network.PublicIPAddress("server-ip", {
+    resourceGroupName: resourceGroup.name,
+    publicIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
+});
 
-// const networkInterface = new azure_native.network.NetworkInterface("server-nic", {
-//     resourceGroupName: resourceGroup.name,
-//     ipConfigurations: [{
-//         name: "webserveripcfg",
-//         subnet: { id: subnetVM.id },
-//         privateIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
-//         publicIPAddress: { id: publicIp.id },
-//     }],
-// });
+const networkInterface = new azure_native.network.NetworkInterface("server-nic", {
+    resourceGroupName: resourceGroup.name,
+    ipConfigurations: [{
+        name: "webserveripcfg",
+        subnet: { id: subnetVm.id },
+        privateIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
+        publicIPAddress: { id: publicIp.id },
+    }],
+});
 
-// const vm = new azure_native.compute.VirtualMachine("server-vm", {
-//     resourceGroupName: resourceGroup.name,
-//     networkProfile: {
-//         networkInterfaces: [{ id: networkInterface.id }],
-//     },
-//     hardwareProfile: {
-//         vmSize: azure_native.compute.VirtualMachineSizeTypes.Standard_B2s,
-//     },
-//     osProfile: {
-//         computerName: "hostname",
-//         adminUsername: "azadm",
-//         adminPassword: "StrongPass#789",
-//         linuxConfiguration: {
-//             disablePasswordAuthentication: false,
-//         },
-//     },
-//     storageProfile: {
-//         osDisk: {
-//             createOption: azure_native.compute.DiskCreateOption.FromImage,
-//             name: "myosdisk1",
-//         },
-//         imageReference: {
-//             publisher: "Canonical",
-//             offer: "0001-com-ubuntu-server-focal",
-//             sku: "20_04-lts-gen2",
-//             version: "latest",
-//         },
-//     },
-// });
+const vm = new azure_native.compute.VirtualMachine("server-vm", {
+    resourceGroupName: resourceGroup.name,
+    networkProfile: {
+        networkInterfaces: [{ id: networkInterface.id }],
+    },
+    hardwareProfile: {
+        vmSize: azure_native.compute.VirtualMachineSizeTypes.Standard_B2s,
+    },
+    osProfile: {
+        computerName: "hostname",
+        adminUsername: "azadm",
+        adminPassword: "StrongPass#789",
+        linuxConfiguration: {
+            disablePasswordAuthentication: false,
+        },
+    },
+    storageProfile: {
+        osDisk: {
+            createOption: azure_native.compute.DiskCreateOption.FromImage,
+            name: "myosdisk1",
+        },
+        imageReference: {
+            publisher: "Canonical",
+            offer: "0001-com-ubuntu-server-focal",
+            sku: "20_04-lts-gen2",
+            version: "latest",
+        },
+    },
+});
