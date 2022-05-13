@@ -19,4 +19,11 @@ pulumi up -s dev -y
 
 3 - Site should be available via Private Endpoint - Use the Jumpbox VM for testing.
 
-The Static Web Site will be available by it's public name, but routed internally by the Private DNS Zone. External access is blocked by the Azure Firewall. Detailed explanation [here](https://stackoverflow.com/a/69423659/3231778).
+The Static Web Site will be available by it's public name, but routed internally by the Private DNS Zone. External access is blocked by the Azure Firewall.
+
+```sh
+wget wget https://thankful-sand-084c7860f.1.azurestaticapps.net
+```
+
+
+For a detailed explanation check [this](https://stackoverflow.com/a/69423659/3231778) answer.
