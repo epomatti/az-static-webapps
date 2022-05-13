@@ -22,7 +22,7 @@ pulumi up -s dev -y
 The Static Web Site will be available by it's public name, but routed internally by the Private DNS Zone. External access is blocked by the Azure Firewall.
 
 ```sh
-wget wget https://thankful-sand-084c7860f.1.azurestaticapps.net
+wget https://thankful-sand-084c7860f.1.azurestaticapps.net
 ```
 
 
