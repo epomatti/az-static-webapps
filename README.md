@@ -1,4 +1,4 @@
-# Pulumi on Azure - Private Endpoints, Static Web
+# Pulumi Azure Native - Private Endpoints, Static Web App
 
 Private static web app accessible via Private Endpoints and blocked to the internet.
 
