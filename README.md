@@ -27,3 +27,11 @@ wget https://thankful-sand-084c7860f.1.azurestaticapps.net
 
 
 For a detailed explanation check [this](https://stackoverflow.com/a/69423659/3231778) answer.
+
+---
+
+To clean up the resources:
+
+```sh
+pulumi destroy -s dev -y
+```
