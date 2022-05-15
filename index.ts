@@ -144,7 +144,11 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         port: 443,
         protocol: "Https",
         requestTimeout: 30,
-        pickHostNameFromBackendAddress: true
+        pickHostNameFromBackendAddress: true,
+        probeEnabled: true,
+        probe: {
+            id: buildResourceId("probes", "basicProbe")
+        }
     }],
     frontendIPConfigurations: [{
         name: "appgwfip",
@@ -166,6 +170,17 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
             id: pulumi.interpolate`${subnetGateway.id}`,
         },
     }],
+    probes: [
+        {
+            name: "basicProbe",
+            protocol: "https",
+            pickHostNameFromBackendHttpSettings: true,
+            path: "/",
+            interval: 30,
+            timeout: 30,
+            unhealthyThreshold: 3
+        }
+    ],
     httpListeners: [
         // {
         //     frontendIPConfiguration: {
@@ -266,47 +281,47 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
 
 // Jumpbox VM for Testing
 
-// const publicIp = new azure_native.network.PublicIPAddress("server-ip", {
-//     resourceGroupName: resourceGroup.name,
-//     publicIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
-// });
+const publicIp = new azure_native.network.PublicIPAddress("server-ip", {
+    resourceGroupName: resourceGroup.name,
+    publicIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
+});
 
-// const networkInterface = new azure_native.network.NetworkInterface("server-nic", {
-//     resourceGroupName: resourceGroup.name,
-//     ipConfigurations: [{
-//         name: "webserveripcfg",
-//         subnet: { id: subnetVm.id },
-//         privateIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
-//         publicIPAddress: { id: publicIp.id },
-//     }],
-// });
+const networkInterface = new azure_native.network.NetworkInterface("server-nic", {
+    resourceGroupName: resourceGroup.name,
+    ipConfigurations: [{
+        name: "webserveripcfg",
+        subnet: { id: subnetVm.id },
+        privateIPAllocationMethod: azure_native.network.IPAllocationMethod.Dynamic,
+        publicIPAddress: { id: publicIp.id },
+    }],
+});
 
-// const vm = new azure_native.compute.VirtualMachine("server-vm", {
-//     resourceGroupName: resourceGroup.name,
-//     networkProfile: {
-//         networkInterfaces: [{ id: networkInterface.id }],
-//     },
-//     hardwareProfile: {
-//         vmSize: azure_native.compute.VirtualMachineSizeTypes.Standard_B2s,
-//     },
-//     osProfile: {
-//         computerName: "hostname",
-//         adminUsername: "azadm",
-//         adminPassword: "StrongPass#789",
-//         linuxConfiguration: {
-//             disablePasswordAuthentication: false,
-//         },
-//     },
-//     storageProfile: {
-//         osDisk: {
-//             createOption: azure_native.compute.DiskCreateOption.FromImage,
-//             name: "myosdisk1",
-//         },
-//         imageReference: {
-//             publisher: "Canonical",
-//             offer: "0001-com-ubuntu-server-focal",
-//             sku: "20_04-lts-gen2",
-//             version: "latest",
-//         },
-//     },
-// });
+const vm = new azure_native.compute.VirtualMachine("server-vm", {
+    resourceGroupName: resourceGroup.name,
+    networkProfile: {
+        networkInterfaces: [{ id: networkInterface.id }],
+    },
+    hardwareProfile: {
+        vmSize: azure_native.compute.VirtualMachineSizeTypes.Standard_B2s,
+    },
+    osProfile: {
+        computerName: "hostname",
+        adminUsername: "azadm",
+        adminPassword: "StrongPass#789",
+        linuxConfiguration: {
+            disablePasswordAuthentication: false,
+        },
+    },
+    storageProfile: {
+        osDisk: {
+            createOption: azure_native.compute.DiskCreateOption.FromImage,
+            name: "myosdisk1",
+        },
+        imageReference: {
+            publisher: "Canonical",
+            offer: "0001-com-ubuntu-server-focal",
+            sku: "20_04-lts-gen2",
+            version: "latest",
+        },
+    },
+});
