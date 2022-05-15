@@ -202,23 +202,6 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     //     },
     // },
     requestRoutingRules: [
-        // {
-        //     backendAddressPool: {
-        //         id: buildResourceId("backendAddressPools", "appgwpool"),
-        //     },
-        //     backendHttpSettings: {
-        //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-        //     },
-        //     httpListener: {
-        //         id: buildResourceId("httpListeners", "appgwhl"),
-        //     },
-        //     name: "appgwrule",
-        //     priority: 10,
-        //     rewriteRuleSet: {
-        //         id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-        //     },
-        //     ruleType: "Basic",
-        // },
         {
             httpListener: {
                 id: buildResourceId("httpListeners", "appgwhttplistener"),
@@ -231,10 +214,6 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
             },
             name: "appgwBasicRule",
             ruleType: "Basic",
-
-            // urlPathMap: {
-            //     id: buildResourceId("urlPathMaps", "pathMap1"),
-            // },
         },
     ],
     resourceGroupName: resourceGroup.name,
