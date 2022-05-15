@@ -24,7 +24,7 @@ pulumi up -s dev -y
 The Static Web Site will be available by it's public name, but routed internally by the Private DNS Zone. External access is blocked by the Azure Firewall.
 
 ```sh
-wget https://thankful-sand-084c7860f.1.azurestaticapps.net
+curl https://thankful-sand-084c7860f.1.azurestaticapps.net
 ```
 
 
@@ -34,7 +34,7 @@ For a detailed explanation check [this](https://stackoverflow.com/a/69423659/323
 
 ```sh
 curl http://gateway.intranet.mycompany.com
-curl https://gateway.intranet.mycompany.com
+curl https://gateway.intranet.mycompany.com -k
 ```
 ---
 
