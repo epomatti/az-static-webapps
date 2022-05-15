@@ -124,6 +124,10 @@ const buildResourceId = (type: string, name: string) => {
     return pulumi.interpolate`${resourceGroup.id}/providers/Microsoft.Network/applicationGateways/${applicationGatewayName}/${type}/${name}`
 }
 
+const subnetGatewaySubResource: pulumi.Input<azure_native.types.input.network.SubResourceArgs> = {
+    id: subnetGateway.id
+}
+
 const applicationGateway = new azure_native.network.ApplicationGateway("applicationGateway", {
     applicationGatewayName: applicationGatewayName,
     backendAddressPools: [{
@@ -146,7 +150,8 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         // publicIPAddress: {
         //     id: pulumi.interpolate`${resourceGroup.id}/providers/Microsoft.Network/publicIPAddresses/appgwpip`,
         // },
-        privateIPAddress: "10.0.90.100"
+        subnet: subnetGatewaySubResource
+        // privateIPAddress: "10.0.90.100"
     }],
     frontendPorts: [
         // {
@@ -200,29 +205,29 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     //     },
     // },
     requestRoutingRules: [
-        {
-            backendAddressPool: {
-                id: buildResourceId("backendAddressPools", "appgwpool"),
-            },
-            backendHttpSettings: {
-                id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-            },
-            httpListener: {
-                id: buildResourceId("httpListeners", "appgwhl"),
-            },
-            name: "appgwrule",
-            priority: 10,
-            rewriteRuleSet: {
-                id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-            },
-            ruleType: "Basic",
-        },
+        // {
+        //     backendAddressPool: {
+        //         id: buildResourceId("backendAddressPools", "appgwpool"),
+        //     },
+        //     backendHttpSettings: {
+        //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
+        //     },
+        //     httpListener: {
+        //         id: buildResourceId("httpListeners", "appgwhl"),
+        //     },
+        //     name: "appgwrule",
+        //     priority: 10,
+        //     rewriteRuleSet: {
+        //         id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
+        //     },
+        //     ruleType: "Basic",
+        // },
         {
             httpListener: {
                 id: buildResourceId("httpListeners", "appgwhttplistener"),
             },
             name: "appgwPathBasedRule",
-            priority: 20,
+            // priority: 20,
             ruleType: "PathBasedRouting",
             urlPathMap: {
                 id: buildResourceId("urlPathMaps", "pathMap1"),
@@ -230,32 +235,32 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         },
     ],
     resourceGroupName: resourceGroup.name,
-    rewriteRuleSets: [{
-        name: "rewriteRuleSet1",
-        rewriteRules: [{
-            actionSet: {
-                requestHeaderConfigurations: [{
-                    headerName: "X-Forwarded-For",
-                    headerValue: "{var_add_x_forwarded_for_proxy}",
-                }],
-                responseHeaderConfigurations: [{
-                    headerName: "Strict-Transport-Security",
-                    headerValue: "max-age=31536000",
-                }],
-                urlConfiguration: {
-                    modifiedPath: "/abc",
-                },
-            },
-            conditions: [{
-                ignoreCase: true,
-                negate: false,
-                pattern: "^Bearer",
-                variable: "http_req_Authorization",
-            }],
-            name: "Set X-Forwarded-For",
-            ruleSequence: 102,
-        }],
-    }],
+    // rewriteRuleSets: [{
+    //     name: "rewriteRuleSet1",
+    //     rewriteRules: [{
+    //         actionSet: {
+    //             requestHeaderConfigurations: [{
+    //                 headerName: "X-Forwarded-For",
+    //                 headerValue: "{var_add_x_forwarded_for_proxy}",
+    //             }],
+    //             responseHeaderConfigurations: [{
+    //                 headerName: "Strict-Transport-Security",
+    //                 headerValue: "max-age=31536000",
+    //             }],
+    //             urlConfiguration: {
+    //                 modifiedPath: "/abc",
+    //             },
+    //         },
+    //         conditions: [{
+    //             ignoreCase: true,
+    //             negate: false,
+    //             pattern: "^Bearer",
+    //             variable: "http_req_Authorization",
+    //         }],
+    //         name: "Set X-Forwarded-For",
+    //         ruleSequence: 102,
+    //     }],
+    // }],
     sku: {
         capacity: 1,
         name: "Standard_Small",
@@ -307,9 +312,9 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         defaultBackendHttpSettings: {
             id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
         },
-        defaultRewriteRuleSet: {
-            id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-        },
+        // defaultRewriteRuleSet: {
+        //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
+        // },
         name: "pathMap1",
         pathRules: [{
             backendAddressPool: {
@@ -323,9 +328,9 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
                 "/api",
                 "/v1/api",
             ],
-            rewriteRuleSet: {
-                id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-            },
+            // rewriteRuleSet: {
+            //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
+            // },
         }],
     }],
 });
