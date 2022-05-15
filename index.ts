@@ -47,7 +47,7 @@ const privateZone = new azure_native.network.PrivateZone("privateZone", {
     dependsOn: [virtualNetwork],
 });
 
-const virtualNetworkLinkGateway = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
+const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
     location: "global",
     privateZoneName: privateZone.name,
     registrationEnabled: true,
@@ -67,7 +67,7 @@ const privateZoneGateway = new azure_native.network.PrivateZone("privateZoneGate
     dependsOn: [virtualNetwork],
 });
 
-const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLinkGateway", {
+const virtualNetworkLinkGateway = new azure_native.network.VirtualNetworkLink("virtualNetworkLinkGateway", {
     location: "global",
     privateZoneName: privateZoneGateway.name,
     registrationEnabled: true,
@@ -258,8 +258,8 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     }],
     sku: {
         capacity: 1,
-        name: "Basic",
-        tier: "Basic",
+        name: "Standard_Small",
+        tier: "Standard",
     },
     // sslCertificates: [
     //     {
