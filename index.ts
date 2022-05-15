@@ -50,7 +50,7 @@ const privateZone = new azure_native.network.PrivateZone("privateZone", {
 const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
     location: "global",
     privateZoneName: privateZone.name,
-    registrationEnabled: true,
+    registrationEnabled: false,
     resourceGroupName: resourceGroup.name,
     virtualNetwork: {
         id: virtualNetwork.id,
@@ -144,6 +144,7 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         port: 443,
         protocol: "Https",
         requestTimeout: 30,
+        pickHostNameFromBackendAddress: true
     }],
     frontendIPConfigurations: [{
         name: "appgwfip",
@@ -226,12 +227,18 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
             httpListener: {
                 id: buildResourceId("httpListeners", "appgwhttplistener"),
             },
-            name: "appgwPathBasedRule",
-            // priority: 20,
-            ruleType: "PathBasedRouting",
-            urlPathMap: {
-                id: buildResourceId("urlPathMaps", "pathMap1"),
+            backendHttpSettings: {
+                id: buildResourceId("backendHttpSettingsCollection", "appgwbhs")
             },
+            backendAddressPool: {
+                id: buildResourceId("backendAddressPools", "appgwpool"),
+            },
+            name: "appgwBasicRule",
+            ruleType: "Basic",
+
+            // urlPathMap: {
+            //     id: buildResourceId("urlPathMaps", "pathMap1"),
+            // },
         },
     ],
     resourceGroupName: resourceGroup.name,
@@ -305,34 +312,35 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     //         name: "rootcert1",
     //     },
     // ],
-    urlPathMaps: [{
-        defaultBackendAddressPool: {
-            id: buildResourceId("backendAddressPools", "appgwpool"),
-        },
-        defaultBackendHttpSettings: {
-            id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-        },
-        // defaultRewriteRuleSet: {
-        //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-        // },
-        name: "pathMap1",
-        pathRules: [{
-            backendAddressPool: {
-                id: buildResourceId("backendAddressPools", "appgwpool"),
-            },
-            backendHttpSettings: {
-                id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-            },
-            name: "apiPaths",
-            paths: [
-                "/api",
-                "/v1/api",
-            ],
-            // rewriteRuleSet: {
-            //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-            // },
-        }],
-    }],
+
+    // urlPathMaps: [{
+    //     defaultBackendAddressPool: {
+    //         id: buildResourceId("backendAddressPools", "appgwpool"),
+    //     },
+    //     defaultBackendHttpSettings: {
+    //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
+    //     },
+    //     // defaultRewriteRuleSet: {
+    //     //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
+    //     // },
+    //     name: "pathMap1",
+    //     // pathRules: [{
+    //     //     backendAddressPool: {
+    //     //         id: buildResourceId("backendAddressPools", "appgwpool"),
+    //     //     },
+    //     //     backendHttpSettings: {
+    //     //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
+    //     //     },
+    //     //     name: "apiPaths",
+    //     //     // paths: [
+    //     //     //     "/*",
+    //     //     //     // "/v1/api",
+    //     //     // ],
+    //     //     // rewriteRuleSet: {
+    //     //     //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
+    //     //     // },
+    //     // }],
+    // }],
 });
 
 
