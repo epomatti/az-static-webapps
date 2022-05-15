@@ -148,11 +148,7 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     }],
     frontendIPConfigurations: [{
         name: "appgwfip",
-        // publicIPAddress: {
-        //     id: pulumi.interpolate`${resourceGroup.id}/providers/Microsoft.Network/publicIPAddresses/appgwpip`,
-        // },
         subnet: subnetGatewaySubResource
-        // privateIPAddress: "10.0.90.100"
     }],
     frontendPorts: [
         // {
