@@ -4,7 +4,7 @@ Private static web app accessible via Private Endpoints and blocked to the inter
 
 Since it is not possible to use a [custom domain](https://stackoverflow.com/a/72241461/3231778) with private endpoints I deployed a private Application Gateway for the purpose of demonstration. This might not be optimal for a Static Web Site but get's the done, but it would be prohibitive if you depend on Enterprise-Edge capabilities.
 
-<img src=".docs/staticwebapp.drawio.svg">
+<img src=".docs/staticwebapp.drawio.svg?1">
 
 ## Deployment
 
