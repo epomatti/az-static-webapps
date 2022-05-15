@@ -238,32 +238,6 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
         },
     ],
     resourceGroupName: resourceGroup.name,
-    // rewriteRuleSets: [{
-    //     name: "rewriteRuleSet1",
-    //     rewriteRules: [{
-    //         actionSet: {
-    //             requestHeaderConfigurations: [{
-    //                 headerName: "X-Forwarded-For",
-    //                 headerValue: "{var_add_x_forwarded_for_proxy}",
-    //             }],
-    //             responseHeaderConfigurations: [{
-    //                 headerName: "Strict-Transport-Security",
-    //                 headerValue: "max-age=31536000",
-    //             }],
-    //             urlConfiguration: {
-    //                 modifiedPath: "/abc",
-    //             },
-    //         },
-    //         conditions: [{
-    //             ignoreCase: true,
-    //             negate: false,
-    //             pattern: "^Bearer",
-    //             variable: "http_req_Authorization",
-    //         }],
-    //         name: "Set X-Forwarded-For",
-    //         ruleSequence: 102,
-    //     }],
-    // }],
     sku: {
         capacity: 1,
         name: "Standard_Small",
