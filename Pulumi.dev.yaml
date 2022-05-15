@@ -1,2 +1,3 @@
 config:
   azure-native:location: eastus2
+  az-static-webapps-pulumi:appGWName: appgw-intranet-dev

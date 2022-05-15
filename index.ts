@@ -1,6 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as azure_native from "@pulumi/azure-native";
 
+let config = new pulumi.Config();
+
 const resourceGroup = new azure_native.resources.ResourceGroup("rg-static-webapp", {
 });
 
@@ -28,7 +30,14 @@ const subnetVm = new azure_native.network.Subnet("subnet-002-vm", {
     virtualNetworkName: virtualNetwork.name,
 });
 
-// Private DNS
+const subnetGateway = new azure_native.network.Subnet("App-Gateway-Subnet", {
+    addressPrefix: "10.0.90.0/27",
+    privateEndpointNetworkPolicies: azure_native.network.VirtualNetworkPrivateEndpointNetworkPolicies.Enabled,
+    resourceGroupName: resourceGroup.name,
+    virtualNetworkName: virtualNetwork.name,
+});
+
+// Private DNS - Azure Web
 
 const privateZone = new azure_native.network.PrivateZone("privateZone", {
     location: "global",
@@ -41,12 +50,32 @@ const privateZone = new azure_native.network.PrivateZone("privateZone", {
 const virtualNetworkLink = new azure_native.network.VirtualNetworkLink("virtualNetworkLink", {
     location: "global",
     privateZoneName: privateZone.name,
-    registrationEnabled: true,
+    registrationEnabled: false,
     resourceGroupName: resourceGroup.name,
     virtualNetwork: {
         id: virtualNetwork.id,
     },
     virtualNetworkLinkName: "virtualNetworkLink1",
+});
+
+// Private DNS - Gateway
+const privateZoneGateway = new azure_native.network.PrivateZone("privateZoneGateway", {
+    location: "global",
+    privateZoneName: "intranet.mycompany.com",
+    resourceGroupName: resourceGroup.name
+}, {
+    dependsOn: [virtualNetwork],
+});
+
+const virtualNetworkLinkGateway = new azure_native.network.VirtualNetworkLink("virtualNetworkLinkGateway", {
+    location: "global",
+    privateZoneName: privateZoneGateway.name,
+    registrationEnabled: true,
+    resourceGroupName: resourceGroup.name,
+    virtualNetwork: {
+        id: virtualNetwork.id,
+    },
+    virtualNetworkLinkName: "virtualNetworkLinkGateway",
 });
 
 // Private Static WebSite
@@ -85,6 +114,168 @@ const privateDNSZoneGroup = new azure_native.network.PrivateDnsZoneGroup("privat
     privateDnsZoneGroupName: privateEndpoint.name,
     privateEndpointName: privateEndpoint.name,
     resourceGroupName: resourceGroup.name,
+});
+
+// Application Gateway
+
+const applicationGatewayName = config.require("appGWName");
+
+const buildResourceId = (type: string, name: string) => {
+    return pulumi.interpolate`${resourceGroup.id}/providers/Microsoft.Network/applicationGateways/${applicationGatewayName}/${type}/${name}`
+}
+
+const subnetGatewaySubResource: pulumi.Input<azure_native.types.input.network.SubResourceArgs> = {
+    id: subnetGateway.id
+}
+
+const applicationGateway = new azure_native.network.ApplicationGateway("applicationGateway", {
+    applicationGatewayName: applicationGatewayName,
+    backendAddressPools: [{
+        backendAddresses: [
+            {
+                fqdn: staticSite.defaultHostname
+            },
+        ],
+        name: "appgwpool",
+    }],
+    backendHttpSettingsCollection: [{
+        cookieBasedAffinity: "Disabled",
+        name: "appgwbhs",
+        port: 443,
+        protocol: "Https",
+        requestTimeout: 30,
+        pickHostNameFromBackendAddress: true,
+        probeEnabled: true,
+        probe: {
+            id: buildResourceId("probes", "basicProbe")
+        }
+    }],
+    frontendIPConfigurations: [{
+        name: "appgwfip",
+        subnet: subnetGatewaySubResource
+    }],
+    frontendPorts: [
+        // {
+        //     name: "appgwfp",
+        //     port: 443,
+        // },
+        {
+            name: "appgwfp80",
+            port: 80,
+        },
+    ],
+    gatewayIPConfigurations: [{
+        name: "appgwipc",
+        subnet: {
+            id: pulumi.interpolate`${subnetGateway.id}`,
+        },
+    }],
+    probes: [
+        {
+            name: "basicProbe",
+            protocol: "https",
+            pickHostNameFromBackendHttpSettings: true,
+            path: "/",
+            interval: 30,
+            timeout: 30,
+            unhealthyThreshold: 3
+        }
+    ],
+    httpListeners: [
+        // {
+        //     frontendIPConfiguration: {
+        //         id: buildResourceId("frontendIPConfigurations", "appgwfip"),
+        //     },
+        //     frontendPort: {
+        //         id: "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/applicationGateways/appgw/frontendPorts/appgwfp",
+        //     },
+        //     name: "appgwhl",
+        //     protocol: "Https",
+        //     requireServerNameIndication: false,
+        //     sslCertificate: {
+        //         id: "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/applicationGateways/appgw/sslCertificates/sslcert",
+        //     },
+        //     sslProfile: {
+        //         id: "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/applicationGateways/appgw/sslProfiles/sslProfile1",
+        //     },
+        // },
+        {
+            frontendIPConfiguration: {
+                id: buildResourceId("frontendIPConfigurations", "appgwfip"),
+            },
+            frontendPort: {
+                id: buildResourceId("frontendPorts", "appgwfp80"),
+            },
+            name: "appgwhttplistener",
+            protocol: "Http",
+        },
+    ],
+    // identity: {
+    //     type: azure_native.network.ResourceIdentityType.UserAssigned,
+    //     userAssignedIdentities: {
+    //         "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/identity1": {},
+    //     },
+    // },
+    requestRoutingRules: [
+        {
+            httpListener: {
+                id: buildResourceId("httpListeners", "appgwhttplistener"),
+            },
+            backendHttpSettings: {
+                id: buildResourceId("backendHttpSettingsCollection", "appgwbhs")
+            },
+            backendAddressPool: {
+                id: buildResourceId("backendAddressPools", "appgwpool"),
+            },
+            name: "appgwBasicRule",
+            ruleType: "Basic",
+        },
+    ],
+    resourceGroupName: resourceGroup.name,
+    sku: {
+        capacity: 1,
+        name: "Standard_Small",
+        tier: "Standard",
+    },
+    // sslCertificates: [
+    //     {
+    //         data: "****",
+    //         name: "sslcert",
+    //         password: "****",
+    //     },
+    //     {
+    //         keyVaultSecretId: "https://kv/secret",
+    //         name: "sslcert2",
+    //     },
+    // ],
+    // sslProfiles: [{
+    //     clientAuthConfiguration: {
+    //         verifyClientCertIssuerDN: true,
+    //     },
+    //     name: "sslProfile1",
+    //     sslPolicy: {
+    //         cipherSuites: ["TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"],
+    //         minProtocolVersion: "TLSv1_1",
+    //         policyType: "Custom",
+    //     },
+    //     trustedClientCertificates: [{
+    //         id: "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.Network/applicationGateways/appgw/trustedClientCertificates/clientcert",
+    //     }],
+    // }],
+    // trustedClientCertificates: [{
+    //     data: "****",
+    //     name: "clientcert",
+    // }],
+    // trustedRootCertificates: [
+    //     {
+    //         data: "****",
+    //         name: "rootcert",
+    //     },
+    //     {
+    //         keyVaultSecretId: "https://kv/secret",
+    //         name: "rootcert1",
+    //     },
+    // ],
 });
 
 
