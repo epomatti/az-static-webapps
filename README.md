@@ -46,6 +46,8 @@ pulumi destroy -s dev -y
 
 ## Certificates
 
+To generate your own certificates:
+
 ```sh
 # use intranet.mycompany.com for CN
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3650 -nodes
