@@ -261,35 +261,6 @@ const applicationGateway = new azure_native.network.ApplicationGateway("applicat
     //         name: "rootcert1",
     //     },
     // ],
-
-    // urlPathMaps: [{
-    //     defaultBackendAddressPool: {
-    //         id: buildResourceId("backendAddressPools", "appgwpool"),
-    //     },
-    //     defaultBackendHttpSettings: {
-    //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-    //     },
-    //     // defaultRewriteRuleSet: {
-    //     //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-    //     // },
-    //     name: "pathMap1",
-    //     // pathRules: [{
-    //     //     backendAddressPool: {
-    //     //         id: buildResourceId("backendAddressPools", "appgwpool"),
-    //     //     },
-    //     //     backendHttpSettings: {
-    //     //         id: buildResourceId("backendHttpSettingsCollection", "appgwbhs"),
-    //     //     },
-    //     //     name: "apiPaths",
-    //     //     // paths: [
-    //     //     //     "/*",
-    //     //     //     // "/v1/api",
-    //     //     // ],
-    //     //     // rewriteRuleSet: {
-    //     //     //     id: buildResourceId("rewriteRuleSets", "rewriteRuleSet1"),
-    //     //     // },
-    //     // }],
-    // }],
 });
 
 
