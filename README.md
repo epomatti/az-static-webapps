@@ -6,9 +6,25 @@ Since it is not possible to use a [custom domain](https://stackoverflow.com/a/72
 
 ![](.docs/staticwebapp.drawio2.svg?)
 
-## Deployment
+## Terraform
 
-#### 1 - Create the infrastructure with Pulumi:
+### Provisioning
+
+Create the infrastructure:
+
+```sh
+cp config/local.auto.tfvars .auto.tfvars
+mkdir -p .keys && ssh-keygen -f .keys/tmp_rsa
+terraform init
+terraform apply -auto-approve
+```
+
+## Manual App Deployment
+
+https://learn.microsoft.com/en-us/azure/static-web-apps/static-web-apps-cli-deploy
+
+
+## Pulumi
 
 ```sh
 npm install
@@ -16,6 +32,13 @@ npm install
 az login
 pulumi up -s dev -y
 ```
+
+
+## Configuration
+
+### 1 - Create the infrastructure with Pulumi:
+
+
 
 #### 2 - Once the Static Web App is deployed, copy the deployment token `AZURE_STATIC_WEB_APPS_API_TOKEN` to GitHub as an Action secret. Triggering the pipeline will deploy the code to Azure.
 
